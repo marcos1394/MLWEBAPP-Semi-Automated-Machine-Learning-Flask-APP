@@ -1,4 +1,4 @@
-# Flask Packages
+# Paquetes de Flask
 from flask import Flask,render_template,request,url_for
 from flask_bootstrap import Bootstrap 
 from flask_uploads import UploadSet,configure_uploads,IMAGES,DATA,ALL
@@ -11,11 +11,11 @@ import datetime
 import time
 
 
-# EDA Packages
+# Paquetes de Analisis de Datos
 import pandas as pd 
 import numpy as np 
 
-# ML Packages
+# Paquetes de ML
 from sklearn import model_selection
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
@@ -25,7 +25,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 
 
-# ML Packages For Vectorization of Text For Feature Extraction
+# Paquetes de ML para vectorización de texto y extracción de caracteristicas
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -35,7 +35,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 app = Flask(__name__)
 Bootstrap(app)
 
-# Configuration for File Uploads
+# Configuración para los archivos subidos
 files = UploadSet('files',ALL)
 app.config['UPLOADED_FILES_DEST'] = 'static/uploadsDB'
 configure_uploads(app,files)
@@ -43,7 +43,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////data/filestorage.db'
 db = SQLAlchemy(app)
 
 
-# Saving Data To Database Storage
+# Guardando los datos en las Base de Datos 
 class FileContents(db.Model):
 	id = db.Column(db.Integer,primary_key=True)
 	name = db.Column(db.String(300))
@@ -55,21 +55,21 @@ class FileContents(db.Model):
 def index():
 	return render_template('index.html')
 
-# Route for our Processing and Details Page
+# Ruta para nuestro procesamiento y pagina de detalle
 @app.route('/dataupload',methods=['GET','POST'])
 def dataupload():
 	if request.method == 'POST' and 'csv_data' in request.files:
 		file = request.files['csv_data']
 		filename = secure_filename(file.filename)
-		#os.path.join is used so that paths work in every operating system
+		#os.path.join es usado para que trabaje en cualquier sistema operativo
         #file.save(os.path.join("wherever","you","want",filename))
 		file.save(os.path.join('data/',filename))
 		fullfile = os.path.join('data/',filename)
 
-		# For Time
+		# Para el tiempo
 		date = str(datetime.datetime.fromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S"))
 
-		# EDA function
+		# Funcion para el analisis exploratorio de datos
 		df = pd.read_csv(os.path.join('data/',filename))
 		df_size = df.size
 		df_shape = df.shape
@@ -81,7 +81,7 @@ def dataupload():
 		# same as above df_Ylabels = df.iloc[:,-1]
 		
 
-		# Model Building
+		# Construcción del modelo
 		X = df_Xfeatures
 		Y = df_Ylabels
 		seed = 7
@@ -93,7 +93,7 @@ def dataupload():
 		models.append(('CART', DecisionTreeClassifier()))
 		models.append(('NB', GaussianNB()))
 		models.append(('SVM', SVC()))
-		# evaluate each model in turn
+		# Evaluando cada modelo por turno
 		
 
 		results = []
@@ -110,7 +110,7 @@ def dataupload():
 			model_results = results
 			model_names = names 
 			
-		# Saving Results of Uploaded Files  to Sqlite DB
+		# Guardando Resultados de los archivos subidos en Sqlite DB
 		newfile = FileContents(name=file.filename,data=file.read(),modeldata=msg)
 		db.session.add(newfile)
 		db.session.commit()		
